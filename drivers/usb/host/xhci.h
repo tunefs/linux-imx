@@ -1911,6 +1911,8 @@ struct xhci_hcd {
 #define XHCI_SUSPEND_RESUME_CLKS	BIT_ULL(43)
 #define XHCI_RESET_TO_DEFAULT	BIT_ULL(44)
 #define XHCI_CDNS_HOST		BIT_ULL(45)
+#define XHCI_ZHAOXIN_TRB_FETCH	BIT_ULL(45)
+#define XHCI_ZHAOXIN_HOST	BIT_ULL(46)
 
 	unsigned int		num_active_eps;
 	unsigned int		limit_active_eps;
@@ -1942,7 +1944,9 @@ struct xhci_hcd {
 
 	void			*dbc;
 
-	ANDROID_KABI_RESERVE(1);
+	/* Used for bug 194461020 */
+	ANDROID_KABI_USE(1, struct xhci_vendor_ops *vendor_ops);
+
 	ANDROID_KABI_RESERVE(2);
 	ANDROID_KABI_RESERVE(3);
 	ANDROID_KABI_RESERVE(4);

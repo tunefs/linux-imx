@@ -675,6 +675,8 @@ re_probe:
 
 		device_remove(dev);
 		driver_sysfs_remove(dev);
+		if (dev->bus && dev->bus->dma_cleanup)
+			dev->bus->dma_cleanup(dev);
 		device_unbind_cleanup(dev);
 
 		goto re_probe;
@@ -759,6 +761,29 @@ void wait_for_device_probe(void)
 	async_synchronize_full();
 }
 EXPORT_SYMBOL_GPL(wait_for_device_probe);
+
+/**
+ * flush_deferred_probe_now
+ *
+ * This function should be used sparingly. It's meant for when we need to flush
+ * the deferred probe list at earlier initcall levels. Really meant only for KVM
+ * needs. This function should never be exported because it makes no sense for
+ * modules to call this.
+ */
+void flush_deferred_probe_now(void)
+{
+	/*
+	 * Really shouldn't using this if deferred probe has already been
+	 * enabled
+	 */
+	if (WARN_ON(driver_deferred_probe_enable))
+		return;
+
+	driver_deferred_probe_enable = true;
+	driver_deferred_probe_trigger();
+	wait_for_device_probe();
+	driver_deferred_probe_enable = false;
+}
 
 static int __driver_probe_device(struct device_driver *drv, struct device *dev)
 {

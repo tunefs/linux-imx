@@ -38,6 +38,7 @@
 				     90 91 92 93 94 95 96 97 98 99
 				    100>;
 		default-brightness-level = <80>;
+		status = "disabled";
 	};
 
 	lvds_backlight1: lvds_backlight@1 {
@@ -56,6 +57,7 @@
 				     90 91 92 93 94 95 96 97 98 99
 				    100>;
 		default-brightness-level = <80>;
+		status = "disabled";
 	};
 
 	modem_reset: modem-reset {
@@ -1857,7 +1859,8 @@
 				<&A53_2 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>,
 				<&A53_3 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>,
 				<&A72_0 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>,
-				<&A72_1 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>;
+				<&A72_1 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>,
+				<&imx8_gpu_ss 0 1>;
 			};
 		};
 	};

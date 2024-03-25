@@ -80,6 +80,8 @@
 #define EXTCON_DISP_EDP		47	/* Embedded Display Port */
 
 /* Miscellaneous external connector */
+#define EXTCON_VEHICLE_RPMSG_REGISTER  58
+#define EXTCON_VEHICLE_RPMSG_EVENT     59
 #define EXTCON_DOCK		60
 #define EXTCON_JIG		61
 #define EXTCON_MECHANICAL	62

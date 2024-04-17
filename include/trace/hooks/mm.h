@@ -8,6 +8,15 @@
 #define _TRACE_HOOK_MM_H
 
 #include <trace/hooks/vendor_hooks.h>
+
+struct shmem_inode_info;
+struct folio;
+struct page_vma_mapped_walk;
+
+DECLARE_RESTRICTED_HOOK(android_rvh_shmem_get_folio,
+			TP_PROTO(struct shmem_inode_info *info, struct folio **folio),
+			TP_ARGS(info, folio), 2);
+
 /*
 
 DECLARE_RESTRICTED_HOOK(android_rvh_set_skip_swapcache_flags,
@@ -27,6 +36,38 @@ DECLARE_HOOK(android_vh_slab_folio_alloced,
 DECLARE_HOOK(android_vh_kmalloc_large_alloced,
 	TP_PROTO(struct page *page, unsigned int order, gfp_t flags),
 	TP_ARGS(page, order, flags));
+DECLARE_RESTRICTED_HOOK(android_rvh_ctl_dirty_rate,
+	TP_PROTO(void *unused),
+	TP_ARGS(unused), 1);
+DECLARE_HOOK(android_vh_test_clear_look_around_ref,
+	TP_PROTO(struct page *page),
+	TP_ARGS(page));
+DECLARE_HOOK(android_vh_look_around_migrate_folio,
+	TP_PROTO(struct folio *old_folio, struct folio *new_folio),
+	TP_ARGS(old_folio, new_folio));
+DECLARE_HOOK(android_vh_look_around,
+	TP_PROTO(struct page_vma_mapped_walk *pvmw, struct folio *folio,
+		struct vm_area_struct *vma, int *referenced),
+	TP_ARGS(pvmw, folio, vma, referenced));
+
+struct mem_cgroup;
+DECLARE_HOOK(android_vh_mem_cgroup_alloc,
+	TP_PROTO(struct mem_cgroup *memcg),
+	TP_ARGS(memcg));
+DECLARE_HOOK(android_vh_mem_cgroup_free,
+	TP_PROTO(struct mem_cgroup *memcg),
+	TP_ARGS(memcg));
+DECLARE_HOOK(android_vh_mem_cgroup_id_remove,
+	TP_PROTO(struct mem_cgroup *memcg),
+	TP_ARGS(memcg));
+struct cgroup_subsys_state;
+DECLARE_HOOK(android_vh_mem_cgroup_css_online,
+	TP_PROTO(struct cgroup_subsys_state *css, struct mem_cgroup *memcg),
+	TP_ARGS(css, memcg));
+DECLARE_HOOK(android_vh_mem_cgroup_css_offline,
+	TP_PROTO(struct cgroup_subsys_state *css, struct mem_cgroup *memcg),
+	TP_ARGS(css, memcg));
+
 #endif /* _TRACE_HOOK_MM_H */
 
 /* This part must be outside protection */

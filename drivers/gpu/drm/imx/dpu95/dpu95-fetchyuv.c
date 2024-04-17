@@ -201,7 +201,8 @@ void dpu95_fy_hw_init(struct dpu95_soc *dpu, unsigned int index)
 
 int dpu95_fy_init(struct dpu95_soc *dpu, unsigned int index,
 		  unsigned int id, enum dpu95_unit_type type,
-		  unsigned long pec_base, unsigned long base)
+		  unsigned long pec_base, unsigned long base,
+		  unsigned long dpu_base)
 {
 	struct dpu95_fetchunit *fu;
 
@@ -219,11 +220,13 @@ int dpu95_fy_init(struct dpu95_soc *dpu, unsigned int index,
 	if (!fu->base)
 		return -ENOMEM;
 
+	fu->reg_offset = base - dpu_base;
+	fu->reg_aux_offset = pec_base -dpu_base;
 	fu->dpu = dpu;
 	fu->id = id;
 	fu->index = index;
 	fu->type = type;
-	fu->association_bit = id == 3 ? VIDEO_PLANE(index) : INT_PLANE;
+	fu->association_bit = id == 3 ? INT_PLANE : VIDEO_PLANE(index);
 	fu->link_id = dpu95_fy_link_id[index];
 	fu->cap_mask = DPU95_FETCHYUV_CAP_MASK;
 	fu->reg_offset1 = 0x28;

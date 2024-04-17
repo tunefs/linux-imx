@@ -23,10 +23,10 @@ static void dpu95_fl_shdldreq_sticky(struct dpu95_fetchunit *fu, u8 layer_mask)
 	dpu95_fu_write(fu, SHDLDREQCONTROL, SHDLDREQSTICKY(layer_mask));
 }
 
-void dpu95_fl_set_src_buf_dimensions(struct dpu95_fetchunit *fu,
-				     unsigned int w, unsigned int h,
-				     const struct drm_format_info *unused1,
-				     bool unused2)
+static void dpu95_fl_set_src_buf_dimensions(struct dpu95_fetchunit *fu,
+					    unsigned int w, unsigned int h,
+					    const struct drm_format_info *unused1,
+					    bool unused2)
 {
 	dpu95_fu_write(fu, SOURCEBUFFERDIMENSION(fu),
 		       LINEWIDTH(w) | LINECOUNT(h));
@@ -94,13 +94,16 @@ void dpu95_fl_hw_init(struct dpu95_soc *dpu, unsigned int index)
 
 int dpu95_fl_init(struct dpu95_soc *dpu, unsigned int index,
 		  unsigned int id, enum dpu95_unit_type type,
-		  unsigned long pec_base, unsigned long base)
+		  unsigned long pec_base, unsigned long base,
+		  unsigned long dpu_base)
 {
 	struct dpu95_fetchunit *fu;
 
 	fu = devm_kzalloc(dpu->dev, sizeof(*fu), GFP_KERNEL);
 	if (!fu)
 		return -ENOMEM;
+	fu->reg_offset = base - dpu_base;
+	fu->reg_aux_offset = pec_base - base;
 
 	dpu->fl[index] = fu;
 

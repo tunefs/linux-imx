@@ -37,9 +37,32 @@
 			compatible = "android,trusty-log-v1";
 		};
 	};
+
+	reset_ctrl {
+		compatible = "imx95,resetctrl";
+		status = "okay";
+	};
 };
 
 &lpuart5 {
        /delete-node/ bluetooth;
 };
 
+&{/reserved-memory/linux,cma} {
+	status = "disabled";
+};
+&dpu {
+	trusty;
+};
+
+&{/reserved-memory/} {
+	secure_region: secure {
+		compatible = "imx-secure-ion-pool";
+		reg = <0x0 0xA3800000 0 0x10000000>;
+	};
+	secure_framebuffer_region {
+		compatible = "imx-secure-ion-pool";
+		reg = <0x0 0xA1000000 0 0x2800000>;
+	};
+
+};

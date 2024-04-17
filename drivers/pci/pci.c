@@ -1335,6 +1335,9 @@ static int pci_set_full_power_state(struct pci_dev *dev)
 		pci_restore_bars(dev);
 	}
 
+	if (dev->bus->self)
+		pcie_aspm_pm_state_change(dev->bus->self);
+
 	return 0;
 }
 
@@ -1428,6 +1431,9 @@ static int pci_set_low_power_state(struct pci_dev *dev, pci_power_t state)
 		pci_info_ratelimited(dev, "Refused to change power state from %s to %s\n",
 				     pci_power_name(dev->current_state),
 				     pci_power_name(state));
+
+	if (dev->bus->self)
+		pcie_aspm_pm_state_change(dev->bus->self);
 
 	return 0;
 }
@@ -2428,29 +2434,36 @@ static void pci_pme_list_scan(struct work_struct *work)
 		if (pdev->pme_poll) {
 			struct pci_dev *bridge = pdev->bus->self;
 			struct device *dev = &pdev->dev;
-			int pm_status;
+			struct device *bdev = bridge ? &bridge->dev : NULL;
+			int bref = 0;
 
 			/*
-			 * If bridge is in low power state, the
-			 * configuration space of subordinate devices
-			 * may be not accessible
+			 * If we have a bridge, it should be in an active/D0
+			 * state or the configuration space of subordinate
+			 * devices may not be accessible or stable over the
+			 * course of the call.
 			 */
-			if (bridge && bridge->current_state != PCI_D0)
-				continue;
+			if (bdev) {
+				bref = pm_runtime_get_if_active(bdev, true);
+				if (!bref)
+					continue;
+
+				if (bridge->current_state != PCI_D0)
+					goto put_bridge;
+			}
 
 			/*
-			 * If the device is in a low power state it
-			 * should not be polled either.
+			 * The device itself should be suspended but config
+			 * space must be accessible, therefore it cannot be in
+			 * D3cold.
 			 */
-			pm_status = pm_runtime_get_if_active(dev, true);
-			if (!pm_status)
-				continue;
-
-			if (pdev->current_state != PCI_D3cold)
+			if (pm_runtime_suspended(dev) &&
+			    pdev->current_state != PCI_D3cold)
 				pci_pme_wakeup(pdev, NULL);
 
-			if (pm_status > 0)
-				pm_runtime_put(dev);
+put_bridge:
+			if (bref > 0)
+				pm_runtime_put(bdev);
 		} else {
 			list_del(&pme_dev->list);
 			kfree(pme_dev);
@@ -6889,18 +6902,16 @@ static void of_pci_reserve_static_domain_nr(void)
 	}
 }
 
-static int of_pci_bus_find_domain_nr(struct pci_bus *bus, struct device *parent)
+static int of_pci_bus_find_domain_nr(struct device *parent)
 {
 	static bool static_domains_reserved = false;
-	int domain_nr, ret;
+	int domain_nr;
 
 	/* On the first call scan device tree for static allocations. */
 	if (!static_domains_reserved) {
 		of_pci_reserve_static_domain_nr();
 		static_domains_reserved = true;
 	}
-
-	bus->static_nr = 0;
 
 	if (parent) {
 		/*
@@ -6909,14 +6920,10 @@ static int of_pci_bus_find_domain_nr(struct pci_bus *bus, struct device *parent)
 		 * in DT.
 		 */
 		domain_nr = of_get_pci_domain_nr(parent->of_node);
-		if (domain_nr >= 0) {
-			ret = ida_alloc_range(&pci_domain_nr_static_ida,
-					      domain_nr, domain_nr, GFP_KERNEL);
-			if (ret >= 0)
-				bus->static_nr = 1;
-
-			return ret;
-		}
+		if (domain_nr >= 0)
+			return ida_alloc_range(&pci_domain_nr_static_ida,
+					       domain_nr, domain_nr,
+					       GFP_KERNEL);
 	}
 
 	/*
@@ -6934,7 +6941,7 @@ static void of_pci_bus_release_domain_nr(struct pci_bus *bus, struct device *par
 		return;
 
 	/* Release domain from IDA where it was allocated. */
-	if (bus->static_nr)
+	if (of_get_pci_domain_nr(parent->of_node) == bus->domain_nr)
 		ida_free(&pci_domain_nr_static_ida, bus->domain_nr);
 	else
 		ida_free(&pci_domain_nr_dynamic_ida, bus->domain_nr);
@@ -6942,7 +6949,7 @@ static void of_pci_bus_release_domain_nr(struct pci_bus *bus, struct device *par
 
 int pci_bus_find_domain_nr(struct pci_bus *bus, struct device *parent)
 {
-	return acpi_disabled ? of_pci_bus_find_domain_nr(bus, parent) :
+	return acpi_disabled ? of_pci_bus_find_domain_nr(parent) :
 			       acpi_pci_bus_find_domain_nr(bus);
 }
 

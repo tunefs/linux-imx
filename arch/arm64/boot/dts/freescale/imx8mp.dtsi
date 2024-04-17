@@ -1601,6 +1601,7 @@
 
 					m2m_device{
 						compatible = "imx-isi-m2m";
+						fsl,gpr = <&media_blk_ctrl>;
 						status = "disabled";
 					};
 				};
@@ -1910,6 +1911,7 @@
 					dma-names = "rx", "tx";
 					resets = <&audio_blk_ctrl 0>;
 					power-domains = <&audiomix_pd>;
+					hdmi-phandle = <&hdmi>;
 					status = "disabled";
 				};
 			};

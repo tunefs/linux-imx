@@ -9,6 +9,7 @@
 #include <scsi/scsi.h>
 #include <linux/atomic.h>
 #include <linux/sbitmap.h>
+#include <linux/android_kabi.h>
 
 struct bsg_device;
 struct device;
@@ -98,10 +99,6 @@ struct scsi_vpd {
 	struct rcu_head	rcu;
 	int		len;
 	unsigned char	data[];
-};
-
-enum scsi_vpd_parameters {
-	SCSI_VPD_HEADER_SIZE = 4,
 };
 
 struct scsi_device {
@@ -208,6 +205,7 @@ struct scsi_device {
 	unsigned use_10_for_rw:1; /* first try 10-byte read / write */
 	unsigned use_10_for_ms:1; /* first try 10-byte mode sense/select */
 	unsigned set_dbd_for_ms:1; /* Set "DBD" field in mode sense */
+	unsigned read_before_ms:1;	/* perform a READ before MODE SENSE */
 	unsigned no_report_opcodes:1;	/* no REPORT SUPPORTED OPERATION CODES */
 	unsigned no_write_same:1;	/* no WRITE SAME command */
 	unsigned use_16_for_rw:1; /* Use read/write(16) over read/write(10) */
@@ -284,6 +282,12 @@ struct scsi_device {
 	struct mutex		state_mutex;
 	enum scsi_device_state sdev_state;
 	struct task_struct	*quiesced_by;
+
+	ANDROID_KABI_RESERVE(1);
+	ANDROID_KABI_RESERVE(2);
+	ANDROID_KABI_RESERVE(3);
+	ANDROID_KABI_RESERVE(4);
+
 	unsigned long		sdev_data[];
 } __attribute__((aligned(sizeof(unsigned long))));
 

@@ -1354,7 +1354,7 @@ static int imx6_pcie_config_sid(struct imx6_pcie *imx6_pcie)
 					       smmu_size / sizeof(u32)))
 			return -EINVAL;
 
-		of_property_read_u32(dev->of_node, "smmu_map_mask",
+		of_property_read_u32(dev->of_node, "iommu-map-mask",
 				     &smmu_map_mask);
 	}
 
@@ -1493,9 +1493,14 @@ static void imx6_pcie_ep_init(struct dw_pcie_ep *ep)
 {
 	enum pci_barno bar;
 	struct dw_pcie *pci = to_dw_pcie_from_ep(ep);
+	const struct pci_epc_features *epc_features;
 
 	for (bar = BAR_0; bar <= BAR_5; bar++)
 		dw_pcie_ep_reset_bar(pci, bar);
+	if (ep->ops->get_features) {
+		epc_features = ep->ops->get_features(ep);
+		ep->page_size = epc_features->align;
+	}
 }
 
 static int imx6_pcie_ep_raise_irq(struct dw_pcie_ep *ep, u8 func_no,

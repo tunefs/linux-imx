@@ -684,16 +684,10 @@
 	status = "okay";
 };
 
-&lpuart5 {
-	/* BT */
+&lpuart2 {
 	pinctrl-names = "default";
-	pinctrl-assert-gpios = <&pcal6524 19 GPIO_ACTIVE_HIGH>;
-	pinctrl-0 = <&pinctrl_uart5>;
+	pinctrl-0 = <&pinctrl_uart2>;
 	status = "okay";
-
-	bluetooth {
-		compatible = "nxp,88w8987-bt";
-	};
 };
 
 &media_blk_ctrl {
@@ -917,12 +911,10 @@
 		>;
 	};
 
-	pinctrl_uart5: uart5grp {
+	pinctrl_uart2: uart2grp {
 		fsl,pins = <
-			MX93_PAD_DAP_TDO_TRACESWO__LPUART5_TX	0x31e
-			MX93_PAD_DAP_TDI__LPUART5_RX		0x31e
-			MX93_PAD_DAP_TMS_SWDIO__LPUART5_RTS_B	0x31e
-			MX93_PAD_DAP_TCLK_SWCLK__LPUART5_CTS_B	0x31e
+			MX93_PAD_UART2_RXD__LPUART2_RX			0x31e
+			MX93_PAD_UART2_TXD__LPUART2_TX			0x31e
 		>;
 	};
 

@@ -84,15 +84,6 @@
 		power-domains = <&mlmix>;
 	};
 
-	reg_can2_stby: regulator-can2-stby {
-		compatible = "regulator-fixed";
-		regulator-name = "can2-stby";
-		regulator-min-microvolt = <3300000>;
-		regulator-max-microvolt = <3300000>;
-		gpio = <&adp5585gpio 5 GPIO_ACTIVE_LOW>;
-		enable-active-low;
-	};
-
 	reg_vref_1v8: regulator-adc-vref {
 		compatible = "regulator-fixed";
 		regulator-name = "vref_1v8";
@@ -259,6 +250,16 @@
 			sound-dai = <&bt_sco_codec 1>;
 		};
 	};
+
+	gpio-restart {
+		pinctrl-names = "default";
+		pinctrl-0 = <&pinctrl_restart>;
+		compatible = "gpio-restart";
+		gpios = <&gpio2 29 GPIO_ACTIVE_LOW>;
+		priority = <200>;
+		active-delay = <40000>;
+	};
+
 };
 
 &sai1 {
@@ -327,14 +328,6 @@
 			};
 		};
 	};
-};
-
-&flexcan2 {
-	pinctrl-names = "default", "sleep";
-	pinctrl-0 = <&pinctrl_flexcan2>;
-	pinctrl-1 = <&pinctrl_flexcan2_sleep>;
-	xceiver-supply = <&reg_can2_stby>;
-	status = "okay";
 };
 
 &mu1 {
@@ -577,71 +570,7 @@
 	#size-cells = <0>;
 	clock-frequency = <400000>;
 	pinctrl-names = "default", "sleep";
-	pinctrl-0 = <&pinctrl_lpi2c3>;
-	pinctrl-1 = <&pinctrl_lpi2c3>;
-	status = "okay";
-
-	pcf2131: rtc@53 {
-			compatible = "nxp,pcf2131";
-			reg = <0x53>;
-			interrupt-parent = <&pcal6524>;
-			interrupts = <1 IRQ_TYPE_EDGE_FALLING>;
-			status = "okay";
-	};
-
-	ptn5110: tcpc@50 {
-		compatible = "nxp,ptn5110";
-		reg = <0x50>;
-		interrupt-parent = <&gpio3>;
-		interrupts = <27 IRQ_TYPE_LEVEL_LOW>;
-		status = "okay";
-
-		port {
-			typec1_dr_sw: endpoint {
-				remote-endpoint = <&usb1_drd_sw>;
-			};
-		};
-
-		typec1_con: connector {
-			compatible = "usb-c-connector";
-			label = "USB-C";
-			power-role = "dual";
-			data-role = "dual";
-			try-power-role = "sink";
-			source-pdos = <PDO_FIXED(5000, 3000, PDO_FIXED_USB_COMM)>;
-			sink-pdos = <PDO_FIXED(5000, 3000, PDO_FIXED_USB_COMM)
-				     PDO_VAR(5000, 20000, 3000)>;
-			op-sink-microwatt = <15000000>;
-			self-powered;
-		};
-	};
-
-	ptn5110_2: tcpc@51 {
-		compatible = "nxp,ptn5110";
-		reg = <0x51>;
-		interrupt-parent = <&gpio3>;
-		interrupts = <27 IRQ_TYPE_LEVEL_LOW>;
-		status = "okay";
-
-		port {
-			typec2_dr_sw: endpoint {
-				remote-endpoint = <&usb2_drd_sw>;
-			};
-		};
-
-		typec2_con: connector {
-			compatible = "usb-c-connector";
-			label = "USB-C";
-			power-role = "dual";
-			data-role = "dual";
-			try-power-role = "sink";
-			source-pdos = <PDO_FIXED(5000, 3000, PDO_FIXED_USB_COMM)>;
-			sink-pdos = <PDO_FIXED(5000, 3000, PDO_FIXED_USB_COMM)
-				     PDO_VAR(5000, 20000, 3000)>;
-			op-sink-microwatt = <15000000>;
-			self-powered;
-		};
-	};
+	status = "disabled";
 
 	adp5585_isp: mfd-isp@34 {
 		compatible = "adi,adp5585";
@@ -652,28 +581,6 @@
 			compatible = "adp5585-gpio";
 			gpio-controller;
 			#gpio-cells = <2>;
-		};
-
-		adp5585pwm_isp: pwm-isp {
-			compatible = "adp5585-pwm";
-			#pwm-cells = <3>;
-		};
-	};
-
-	ap1302: ap1302_mipi@3c {
-		compatible = "onsemi,ap1302";
-		reg = <0x3c>;
-		reset-gpios   = <&adp5585gpio 0 GPIO_ACTIVE_LOW>;
-		isp_en-gpios  = <&adp5585gpio_isp 2 GPIO_ACTIVE_HIGH>;
-		DVDD-supply   = <&reg_dvdd_1v2>;
-		VDDIO-supply  = <&reg_vddio_1v8>;
-		AVDD-supply   = <&reg_avdd_2v8>;
-		status = "okay";
-
-		port {
-			ar1302_mipi_ep: endpoint {
-				remote-endpoint = <&mipi_csi_ep>;
-			};
 		};
 	};
 };
@@ -704,12 +611,6 @@
 	samsung,picophy-pre-emp-curr-control = <3>;
 	samsung,picophy-dc-vol-level-adjust = <7>;
 	status = "okay";
-
-	port {
-		usb1_drd_sw: endpoint {
-			remote-endpoint = <&typec1_dr_sw>;
-		};
-	};
 };
 
 &usbotg2 {
@@ -722,12 +623,6 @@
 	samsung,picophy-pre-emp-curr-control = <3>;
 	samsung,picophy-dc-vol-level-adjust = <7>;
 	status = "okay";
-
-	port {
-		usb2_drd_sw: endpoint {
-			remote-endpoint = <&typec2_dr_sw>;
-		};
-	};
 };
 
 &usdhc1 {
@@ -776,10 +671,6 @@
 		interrupts = <26 IRQ_TYPE_LEVEL_LOW>;
 		interrupt-names = "host-wake";
 	};
-};
-
-&wdog3 {
-	status = "okay";
 };
 
 &iomuxc {
@@ -863,20 +754,6 @@
 		>;
 	};
 
-	pinctrl_flexcan2: flexcan2grp {
-		fsl,pins = <
-			MX93_PAD_GPIO_IO25__CAN2_TX	0x139e
-			MX93_PAD_GPIO_IO27__CAN2_RX	0x139e
-		>;
-	};
-	pinctrl_flexcan2_sleep: flexcan2sleepgrp {
-		fsl,pins = <
-			MX93_PAD_GPIO_IO25__GPIO2_IO25  0x31e
-			MX93_PAD_GPIO_IO27__GPIO2_IO27	0x31e
-		>;
-	};
-
-
 	pinctrl_lpi2c1: lpi2c1grp {
 		fsl,pins = <
 			MX93_PAD_I2C1_SCL__LPI2C1_SCL			0x40000b9e
@@ -888,13 +765,6 @@
 		fsl,pins = <
 			MX93_PAD_I2C2_SCL__LPI2C2_SCL			0x40000b9e
 			MX93_PAD_I2C2_SDA__LPI2C2_SDA			0x40000b9e
-		>;
-	};
-
-	pinctrl_lpi2c3: lpi2c3grp {
-		fsl,pins = <
-			MX93_PAD_GPIO_IO28__LPI2C3_SDA			0x40000b9e
-			MX93_PAD_GPIO_IO29__LPI2C3_SCL			0x40000b9e
 		>;
 	};
 
@@ -1144,6 +1014,13 @@
 			MX93_PAD_PDM_BIT_STREAM1__GPIO1_IO10		0x31e
 		>;
 	};
+
+	pinctrl_restart: restartgrp {
+		fsl,pins = <
+			MX93_PAD_GPIO_IO28__GPIO2_IO28			0x31e
+			MX93_PAD_GPIO_IO29__GPIO2_IO29			0x31e
+		>;
+	};
 };
 
 &epxp {
@@ -1159,19 +1036,5 @@
 
 	cap_device {
 		status = "okay";
-	};
-};
-
-&mipi_csi {
-	status = "okay";
-
-	port {
-		mipi_csi_ep: endpoint {
-			remote-endpoint = <&ar1302_mipi_ep>;
-			data-lanes = <2>;
-			cfg-clk-range = <28>;
-			hs-clk-range = <0x2b>;
-			bus-type = <4>;
-		};
 	};
 };
